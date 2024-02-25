@@ -1,0 +1,210 @@
+﻿@page "/tahtakale"
+@using System.Web
+@inject FollowedProductService _followeProductService
+@inject TahtakaleService _tahtaKaleService
+@inject IJSRuntime jsRuntime
+@inject ISnackbar Snackbar
+@inject StateContainer _stateContainer;
+
+
+<MudTable Loading="loading" T="TahtakaleProduct" MultiSelection="true" @bind-SelectOnRowClick="@_selectOnRowClick" SelectedItemsChanged="SelectedItemsChanged" ServerData="@(new Func<TableState, Task<TableData<TahtakaleProduct>>>(ServerReload))"
+          Dense="true" Hover="true" @ref="table" Bordered="true">
+
+    <HeaderContent>
+        <MudTh><MudTableSortLabel Style="max-width:50px" Enabled="false" T="TahtakaleProduct">Görsel</MudTableSortLabel></MudTh>
+        <MudTh>
+            <MudTableSortLabel SortLabel="Barcode" T="TahtakaleProduct">Barkod</MudTableSortLabel>
+            <MudTextField T="string" ValueChanged="@(s=>SearchBarcode(s))" Placeholder="Barkod ile Ara" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortLabel="Title" T="TahtakaleProduct">Başlık</MudTableSortLabel>
+            <MudTextField T="string" ValueChanged="@(s=>SearchTitle(s))" Placeholder="Başlık ile Ara" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudTh>
+        <MudTh Style="max-width:150px">
+            <MudTableSortLabel SortLabel="Price" T="TahtakaleProduct">Fiyat</MudTableSortLabel>
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudNumericField T="decimal" ValueChanged="@(x=>SearchBeginPriceRange(x))" Label="Başlangıç" Variant="Variant.Text" Min="0" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudNumericField T="decimal" ValueChanged="@(x=>SearchEndPriceRange(x))" Label="Bitiş" Variant="Variant.Text" Min="0" />
+                </MudItem>
+            </MudGrid>
+          
+        </MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Quantity" T="TahtakaleProduct">Stok</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="mass_field" T="TahtakaleProduct">Model No</MudTableSortLabel></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Link"><MudImage Src="@context.ImageLink" Width="100" Elevation="1" Class="rounded-sm" /></MudTd>
+        <MudTd DataLabel="Barcode">@context.Barcode</MudTd>
+        <MudTd DataLabel="Title">@context.Title</MudTd>
+        <MudTd DataLabel="Name">@context.Price</MudTd>
+        <MudTd DataLabel="Position">@context.Quantity</MudTd>
+        <MudTd DataLabel="Molar mass">@context.ModelNumber</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+@code {
+    private MudDataGrid<TahtakaleProduct> mudDataGrid;
+    private MudTable<TahtakaleProduct> table;
+    private List<TahtakaleProduct> Elements = new List<TahtakaleProduct>();
+    [CascadingParameter]
+    HashSet<TahtakaleProduct> _selectedItems { get; set;}
+    private bool _selectOnRowClick = true;
+    bool loading = true;
+    bool _dragDropReorderingEnabled = true;
+    protected override async Task OnInitializedAsync()
+    {
+        _stateContainer.OnChange_Products += OnMyChangeHandler;
+
+   
+
+    }
+    [CascadingParameter]
+    private TahtaKaleGetAllByFilterRequest tahtaKaleGetAllByFilterRequestModel { get; set; }
+    = new TahtaKaleGetAllByFilterRequest()
+        {
+            Barcode = string.Empty,
+            BeginPrice = null,
+            EndPrice = null,
+            ModelNumber = null,
+            Quantity = null,
+            Take = 10,
+            Skip = 0,
+            Title = null
+        };
+
+
+    private void SearchTitle(string term)
+    {
+        tahtaKaleGetAllByFilterRequestModel.Title = term;
+        table.ReloadServerData();
+    }
+    private void SearchBarcode(string term)
+    {
+        tahtaKaleGetAllByFilterRequestModel.Barcode = term;
+        table.ReloadServerData();
+    }
+    private void SearchBeginPriceRange(decimal value)
+    {
+        tahtaKaleGetAllByFilterRequestModel.BeginPrice = value;
+        table.ReloadServerData();
+    }
+    private void SearchEndPriceRange(decimal value)
+    {
+        tahtaKaleGetAllByFilterRequestModel.EndPrice = value;
+        table.ReloadServerData();
+    }
+
+    private async void RowsPerPageChangedHandler(int size)
+    {
+        // loading = true;
+        // tahtaKaleGetAllByFilterRequestModel.Take = size;
+        // TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
+        // Elements = resp.Data;
+        // loading = false;
+        // StateHasChanged();
+
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
+            // Elements = resp.Data;
+            // // _selectedItems = Elements.Where(f => _stateContainer.FollowedProducts.Any(x => x.ProductId.ToString() == f.Id)).ToHashSet();
+
+            // loading = false;
+
+            // StateHasChanged();
+        }
+
+    }
+    public async Task ExcelExport()
+    {
+        // var excelBytes = await _tahtaKaleService.GetExcelBytes();
+        // await jsRuntime.InvokeVoidAsync("downloadFile", excelBytes, "tahtakale-products.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    async void SelectedItemsChanged(HashSet<TahtakaleProduct> items)
+    {
+   
+        await RunAfterSelectedItems(items);
+
+    }
+    private async Task RunAfterSelectedItems(HashSet<TahtakaleProduct> items)
+    {
+        try
+        {
+            _selectedItems = items;
+            var mapped = _selectedItems.Select(f => new FollowedProductAddDto
+                {
+                    Barcode = f.Barcode,
+                    ProductId = int.Parse(f.ProductId),
+                    SourceSite = SourceSite.TAHTAKALE
+                }).ToList();
+
+            await _followeProductService.RemoveAndAdd(mapped);
+            Snackbar.Add("Başarılı", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Başarısız", Severity.Error);
+        }
+        try
+        {
+            _stateContainer.FollowedProducts = (await _followeProductService.GetAll()).Items;
+            _stateContainer.OnChange_Products += OnMyChangeHandler;
+        }
+        catch
+        {
+            Snackbar.Add("Başarılı ancak uygulama güncellenemedi", Severity.Warning);
+        }
+
+    }
+    private async void OnMyChangeHandler()
+    {
+
+        // InvokeAsync is inherited, it syncs the call back to the render thread
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+    private async Task<TableData<TahtakaleProduct>> ServerReload(TableState state)
+    {
+        loading = true;
+        tahtaKaleGetAllByFilterRequestModel.Skip = state.Page * state.PageSize;
+        tahtaKaleGetAllByFilterRequestModel.Take =state.PageSize;
+        if (string.IsNullOrEmpty(state.SortLabel)==false)
+        {
+            tahtaKaleGetAllByFilterRequestModel.Sort = new Sort { Column = state.SortLabel, Direction = state.SortDirection };
+        }
+
+
+        TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
+        var followeds = await _followeProductService.GetAll();
+        _selectedItems = resp.Data.Where(f => followeds.Items.Any(x => x.ProductId == Convert.ToInt64(f.ProductId))).ToHashSet();
+
+        loading = false;
+        return new TableData<TahtakaleProduct>() { TotalItems = (int)resp.Total, Items = resp.Data };
+    }
+    private async void OnMyChangexHandler()
+    {
+
+        // InvokeAsync is inherited, it syncs the call back to the render thread
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+}

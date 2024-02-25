@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  converter.api:
+    image: converter_api
+    build:
+      context: .
+      dockerfile: API/Dockerfile
+  converterdb:
+    image: mongo
+  converter.webui:
+    image: converter_webui_image
+    build:
+      context: .
+      dockerfile: Blazor.UI/Dockerfile
+volumes:
+  converterdb_volume:

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  converter.api:
+    container_name: converter.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=19085
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=zk147olu
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - MongoDBSettings:ConnectionString=mongodb://converterdb
+    ports:
+      - 19085:443
+      - 5120:80
+    depends_on:
+      - converterdb
+    volumes:
+      - ./https/aspnetapp.pfx:/https/aspnetapp.pfx:ro
+  converter.webui:
+    container_name: converter.webui
+    environment:
+      - BaseUrl=http://localhost:6100/api/
+    restart: on-failure
+    ports:
+      - "6100:80"
+      - "6101:443"
+  converterdb:
+    container_name: converterdb
+    restart: always
+    ports:
+      - "27023:27017"
+    volumes:
+      - converterdb_volume:/data/db
