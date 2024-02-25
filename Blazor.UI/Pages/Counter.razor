@@ -1,18 +1,20 @@
 ﻿@page "/counter"
-
+@inject StateContainer state;
 <PageTitle>Counter</PageTitle>
 
-<h1>Counter</h1>
+<h1>Counter @state.Property</h1>
 
-<p role="status">Current count: @currentCount</p>
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
-    private int currentCount = 0;
+    protected override void OnInitialized()
+    {
+        state.OnChange += StateHasChanged;
+    }
 
     private void IncrementCount()
     {
-        currentCount++;
+        state.Property = state.Property + 1;
     }
 }

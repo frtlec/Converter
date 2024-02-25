@@ -4,8 +4,8 @@ namespace Blazor.UI
 {
     public class StateContainer
     {
-        private int? globalCounter = 0;
-        public int? Property
+        private int globalCounter = 0;
+        public int Property
         {
             get => globalCounter;
             set

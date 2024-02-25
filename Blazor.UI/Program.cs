@@ -10,6 +10,7 @@ using Newtonsoft.Json.Converters;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
+builder.Services.AddSingleton<StateContainer>();
 JsonConvert.DefaultSettings = (() =>
 {
     var settings = new JsonSerializerSettings();
@@ -32,7 +33,7 @@ builder.Services.AddMudServices(config =>
 string baseAddress = builder.Configuration.GetValue<string>("BaseUrl");
 Console.WriteLine(baseAddress);
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(baseAddress) });
-builder.Services.AddSingleton<StateContainer>();
+
 builder.Services.AddScoped<FollowedProductService>();
 builder.Services.AddScoped<TahtakaleService>();
 

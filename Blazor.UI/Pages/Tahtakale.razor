@@ -7,7 +7,7 @@
 @inject StateContainer _stateContainer;
 
 
-<MudTable Loading="loading" T="TahtakaleProduct" MultiSelection="true" @bind-SelectOnRowClick="@_selectOnRowClick" SelectedItemsChanged="SelectedItemsChanged" ServerData="@(new Func<TableState, Task<TableData<TahtakaleProduct>>>(ServerReload))"
+<MudTable Loading="loading" T="TahtakaleProduct" MultiSelection="true" SelectedItems="_selectedItems" @bind-SelectOnRowClick="@_selectOnRowClick" SelectedItemsChanged="SelectedItemsChanged" ServerData="@(new Func<TableState, Task<TableData<TahtakaleProduct>>>(ServerReload))"
           Dense="true" Hover="true" @ref="table" Bordered="true">
 
     <HeaderContent>
@@ -65,7 +65,7 @@
     protected override async Task OnInitializedAsync()
     {
         _stateContainer.OnChange_Products += OnMyChangeHandler;
-
+        
    
 
     }
@@ -164,6 +164,7 @@
         {
             _stateContainer.FollowedProducts = (await _followeProductService.GetAll()).Items;
             _stateContainer.OnChange_Products += OnMyChangeHandler;
+            StateHasChanged();
         }
         catch
         {
@@ -194,7 +195,7 @@
         TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
         var followeds = await _followeProductService.GetAll();
         _selectedItems = resp.Data.Where(f => followeds.Items.Any(x => x.ProductId == Convert.ToInt64(f.ProductId))).ToHashSet();
-
+        StateHasChanged();
         loading = false;
         return new TableData<TahtakaleProduct>() { TotalItems = (int)resp.Total, Items = resp.Data };
     }

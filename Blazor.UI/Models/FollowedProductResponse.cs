@@ -25,7 +25,7 @@ namespace Blazor.UI.Models
             public List<string> ImageLinks { get; set; }
             public List<string> Categories { get; set; }
             public List<string> ProductTypes { get; set; }
-            [JsonConverter(typeof(StringEnumConverter))]
+            [JsonConverter(typeof(JsonStringEnumConverter))]
             public SourceSite SourceSite { get; set; }
             public Item TahtaKaleItem { get; set; }
             public FollowedProduct FollowedProduct { get; set; }

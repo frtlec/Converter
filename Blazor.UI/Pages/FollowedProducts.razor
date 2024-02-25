@@ -5,7 +5,8 @@
 @inject FollowedProductService _service;
 <h3>FollowedProducts</h3>
 @inject StateContainer _stateContainer;
-<MudDataGrid T="SubItem"
+<CascadingValue Value="_stateContainer.FollowedProducts">
+  <MudDataGrid T="SubItem"
              ReadOnly="@_readOnly"
              Items="@_stateContainer.FollowedProducts"
              RowClass="highlightrow"
@@ -110,6 +111,8 @@
         <MudDataGridPager PageSizeOptions=@(new int[] {500, 1000, 3000}) T="SubItem" />
     </PagerContent>
 </MudDataGrid>
+</CascadingValue>
+
 @code {
     private List<FollowedProductResponse.SubItem> FollowedProductsList = new List<FollowedProductResponse.SubItem>();
     protected override async Task OnInitializedAsync()
