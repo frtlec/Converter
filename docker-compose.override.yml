@@ -16,7 +16,7 @@ services:
     depends_on:
       - converterdb
     volumes:
-      - ./https/aspnetapp.pfx:/https/aspnetapp.pfx:ro
+      - ./https/:/https:ro
   converter.webui:
     container_name: converter.webui
     environment:
