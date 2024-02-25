@@ -3,7 +3,7 @@ WORKDIR /app
 COPY Blazor.UI/*.csproj Blazor.UI/ 
 RUN dotnet restore  Blazor.UI/*.csproj
 COPY . ./
-RUN dotnet publish Blazor.UI/*.csproj -c Release -o out
+RUN dotnet publish Blazor.UI/*.csproj -c Release -o out -p:PublishTrimmed=false
 FROM nginx:latest
 WORKDIR /app
 EXPOSE 80
