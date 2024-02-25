@@ -53,7 +53,7 @@ Task.Run(async () =>
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(); 
 app.UseCors("AllowOrigin");
 app.UseAuthorization();
 
