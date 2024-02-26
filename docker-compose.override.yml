@@ -20,6 +20,7 @@ services:
   converter.webui:
     container_name: converter.webui
     environment:
+      - ASPNETCORE_ENVIRONMENT=Production
       - BaseUrl=http://localhost:6100/api/
     restart: on-failure
     ports:

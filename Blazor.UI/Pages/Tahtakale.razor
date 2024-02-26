@@ -7,10 +7,11 @@
 @inject StateContainer _stateContainer;
 
 
-<MudTable Loading="loading" T="TahtakaleProduct" MultiSelection="true" SelectedItems="_selectedItems" @bind-SelectOnRowClick="@_selectOnRowClick" SelectedItemsChanged="SelectedItemsChanged" ServerData="@(new Func<TableState, Task<TableData<TahtakaleProduct>>>(ServerReload))"
+<MudTable Loading="loading" T="TahtakaleProduct" ServerData="@(new Func<TableState, Task<TableData<TahtakaleProduct>>>(ServerReload))"
           Dense="true" Hover="true" @ref="table" Bordered="true">
 
     <HeaderContent>
+        <MudTh></MudTh>
         <MudTh><MudTableSortLabel Style="max-width:50px" Enabled="false" T="TahtakaleProduct">Görsel</MudTableSortLabel></MudTh>
         <MudTh>
             <MudTableSortLabel SortLabel="Barcode" T="TahtakaleProduct">Barkod</MudTableSortLabel>
@@ -30,12 +31,22 @@
                     <MudNumericField T="decimal" ValueChanged="@(x=>SearchEndPriceRange(x))" Label="Bitiş" Variant="Variant.Text" Min="0" />
                 </MudItem>
             </MudGrid>
-          
+
         </MudTh>
         <MudTh><MudTableSortLabel SortLabel="Quantity" T="TahtakaleProduct">Stok</MudTableSortLabel></MudTh>
         <MudTh><MudTableSortLabel SortLabel="mass_field" T="TahtakaleProduct">Model No</MudTableSortLabel></MudTh>
     </HeaderContent>
     <RowTemplate>
+        <MudTd DataLabel="Barcode">
+            @if (selectedProducts.Contains(context.ProductId))
+            {
+                <MudIconButton Color="Color.Error" OnClick="(()=>RemoveFollowed(context))" Icon="@Icons.Material.Rounded.Close" />
+            }
+            else
+            {
+                <MudIconButton Color="Color.Success" OnClick="(()=>AddFollowed(context))" Icon="@Icons.Material.Filled.Add" />
+            }
+        </MudTd>
         <MudTd DataLabel="Link"><MudImage Src="@context.ImageLink" Width="100" Elevation="1" Class="rounded-sm" /></MudTd>
         <MudTd DataLabel="Barcode">@context.Barcode</MudTd>
         <MudTd DataLabel="Title">@context.Title</MudTd>
@@ -58,16 +69,14 @@
     private MudTable<TahtakaleProduct> table;
     private List<TahtakaleProduct> Elements = new List<TahtakaleProduct>();
     [CascadingParameter]
-    HashSet<TahtakaleProduct> _selectedItems { get; set;}
+    HashSet<TahtakaleProduct> _selectedItems { get; set; }
     private bool _selectOnRowClick = true;
     bool loading = true;
     bool _dragDropReorderingEnabled = true;
+    List<string> selectedProducts = new List<string>();
     protected override async Task OnInitializedAsync()
     {
-        _stateContainer.OnChange_Products += OnMyChangeHandler;
-        
-   
-
+        selectedProducts=(await _followeProductService.GetAll()).Items.Select(f=>f.ProductId.ToString()).ToList();
     }
     [CascadingParameter]
     private TahtaKaleGetAllByFilterRequest tahtaKaleGetAllByFilterRequestModel { get; set; }
@@ -104,31 +113,20 @@
         tahtaKaleGetAllByFilterRequestModel.EndPrice = value;
         table.ReloadServerData();
     }
-
-    private async void RowsPerPageChangedHandler(int size)
+    private async void AddFollowed(TahtakaleProduct item)
     {
-        // loading = true;
-        // tahtaKaleGetAllByFilterRequestModel.Take = size;
-        // TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
-        // Elements = resp.Data;
-        // loading = false;
-        // StateHasChanged();
-
+        await _followeProductService.Add(new FollowedProductAddDto { ProductId = int.Parse(item.ProductId), Barcode = item.Barcode, SourceSite = SourceSite.TAHTAKALE });
+        _stateContainer.FollowedProducts = (await _followeProductService.GetAll()).Items;
+        selectedProducts.Add(item.ProductId);
+        StateHasChanged();
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private async void RemoveFollowed(TahtakaleProduct item)
     {
-        if (firstRender)
-        {
-            // TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
-            // Elements = resp.Data;
-            // // _selectedItems = Elements.Where(f => _stateContainer.FollowedProducts.Any(x => x.ProductId.ToString() == f.Id)).ToHashSet();
-
-            // loading = false;
-
-            // StateHasChanged();
-        }
-
+        await _followeProductService.RemoveByProductIdAndSourceSite(int.Parse(item.ProductId), SourceSite.TAHTAKALE);
+        selectedProducts.Remove(item.ProductId);
+        StateHasChanged();
     }
+
     public async Task ExcelExport()
     {
         // var excelBytes = await _tahtaKaleService.GetExcelBytes();
@@ -137,7 +135,7 @@
 
     async void SelectedItemsChanged(HashSet<TahtakaleProduct> items)
     {
-   
+
         await RunAfterSelectedItems(items);
 
     }
@@ -185,16 +183,12 @@
     {
         loading = true;
         tahtaKaleGetAllByFilterRequestModel.Skip = state.Page * state.PageSize;
-        tahtaKaleGetAllByFilterRequestModel.Take =state.PageSize;
-        if (string.IsNullOrEmpty(state.SortLabel)==false)
+        tahtaKaleGetAllByFilterRequestModel.Take = state.PageSize;
+        if (string.IsNullOrEmpty(state.SortLabel) == false)
         {
             tahtaKaleGetAllByFilterRequestModel.Sort = new Sort { Column = state.SortLabel, Direction = state.SortDirection };
         }
-
-
         TahtaKaleGetAllByFilterResponse resp = await _tahtaKaleService.GetAllByFilter(tahtaKaleGetAllByFilterRequestModel);
-        var followeds = await _followeProductService.GetAll();
-        _selectedItems = resp.Data.Where(f => followeds.Items.Any(x => x.ProductId == Convert.ToInt64(f.ProductId))).ToHashSet();
         StateHasChanged();
         loading = false;
         return new TableData<TahtakaleProduct>() { TotalItems = (int)resp.Total, Items = resp.Data };

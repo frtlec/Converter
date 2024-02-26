@@ -1,7 +1,9 @@
 ﻿using API.Databases.Mongo;
 using API.Databases.Mongo.DataAccess;
 using API.Databases.Mongo.DataModels;
+using API.Hubs;
 using API.Models;
+using Microsoft.AspNetCore.SignalR;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
@@ -14,12 +16,14 @@ namespace API.Services
         private readonly IMongoDatabase _database;
         private readonly IMongoCollection<FollowedProduct> _followedProductCollection;
         private readonly IMongoCollection<TahtakaleProduct> _tahtakaleProductsCollection;
-        public FollowedProductService(IMongoDBSettings settings)
+        private readonly IHubContext<ModifyFollowedListHub, IModifyFollowedClient> _hubContext;
+        public FollowedProductService(IMongoDBSettings settings, IHubContext<ModifyFollowedListHub, IModifyFollowedClient> hubContext)
         {
             _client = new MongoClient(settings.ConnectionString);
             _database = _client.GetDatabase(settings.DatabaseName);
             _followedProductCollection = _database.GetCollection<FollowedProduct>(nameof(FollowedProduct));
             _tahtakaleProductsCollection = _database.GetCollection<TahtakaleProduct>(nameof(TahtakaleProduct));
+            _hubContext = hubContext;
         }
         public async Task<FollowedProductDto> GetAll()
         {
@@ -59,16 +63,27 @@ namespace API.Services
         }
         public async Task Add(FollowedProductAddDto item)
         {
-            await _followedProductCollection.InsertOneAsync(new FollowedProduct
+            var insert = new FollowedProduct
             {
                 Barcode = item.Barcode,
                 SourceSite = SourceSite.TAHTAKALE,
-                ProductId = item.ProductId
-            });
+                ProductId = item.ProductId,
+                CreatedDate=DateTime.Now
+            };
+            await _followedProductCollection.InsertOneAsync(insert);
+            string id = insert.Id;
+            await _hubContext.Clients.All.ReceiveNotification($"Güncellend {DateTime.Now}");
+
         }
         public async Task Remove(string id)
         {
             await _followedProductCollection.DeleteOneAsync(m => m.Id == id);
+        }
+        public async Task RemoveByProductIdAndSource(int productId,SourceSite sourceSite)
+        {
+            await _followedProductCollection.DeleteOneAsync(m => m.ProductId == productId && m.SourceSite==sourceSite);
+            await _hubContext.Clients.All.ReceiveNotification($"Güncellend {DateTime.Now}");
+
         }
         public async Task Update(FollowedProductUpdate updateItem)
         {
@@ -91,6 +106,7 @@ namespace API.Services
             {
                 await _followedProductCollection.InsertManyAsync(insertItems);
             }
+            
         }
     }
 }

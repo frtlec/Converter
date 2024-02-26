@@ -1,5 +1,6 @@
 using API.Databases.Mongo;
 using API.Databases.Mongo.DataAccess;
+using API.Hubs;
 using API.Services;
 using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
@@ -21,6 +22,7 @@ builder.Services.AddTransient<TahtakaleIntegration>();
 builder.Services.AddTransient<TahtakaleService>();
 builder.Services.AddTransient<FollowedProductDataAccess>();
 builder.Services.AddTransient<FollowedProductService>();
+builder.Services.AddSignalR();
 builder.Services.AddSingleton<IMongoDBSettings>(sp =>
   sp.GetRequiredService<IOptions<MongoDBSettings>>().Value);
 builder.Services.Configure<MongoDBSettings>(
@@ -57,6 +59,6 @@ app.UseSwaggerUI();
 app.UseCors("AllowOrigin");
 app.UseAuthorization();
 
+app.MapHub<ModifyFollowedListHub>("modify");
 app.MapControllers();
-
 app.Run();

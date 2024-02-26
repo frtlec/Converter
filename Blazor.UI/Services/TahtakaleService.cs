@@ -15,7 +15,7 @@ namespace Blazor.UI.Services
         {
             try
             {
-                var resp = await _httpClient.PostAsJsonAsync<TahtaKaleGetAllByFilterRequest>("tahtakale/GetAllByFilter", filter);
+                var resp = await _httpClient.PostAsJsonAsync<TahtaKaleGetAllByFilterRequest>("/api/tahtakale/GetAllByFilter", filter);
 
                 if (resp.IsSuccessStatusCode==false)
                 {

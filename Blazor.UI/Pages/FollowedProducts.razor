@@ -1,14 +1,17 @@
 ﻿@page "/followed-products"
 @using System.Web
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IConfiguration _config;
+@inject IJSRuntime JsRuntime
 
 @using static Blazor.UI.Models.FollowedProductResponse
 @inject FollowedProductService _service;
 <h3>FollowedProducts</h3>
 @inject StateContainer _stateContainer;
-<CascadingValue Value="_stateContainer.FollowedProducts">
-  <MudDataGrid T="SubItem"
+
+<MudDataGrid T="SubItem"
              ReadOnly="@_readOnly"
-             Items="@_stateContainer.FollowedProducts"
+             Items="@FollowedProductsList"
              RowClass="highlightrow"
              Breakpoint="Breakpoint.None"
              DragDropColumnReordering="true"
@@ -55,7 +58,7 @@
         <TemplateColumn Hidden="false" CellClass="justify-end">
             <CellTemplate>
                 <MudStack Row>
-                    <MudIconButton Size="@Size.Medium" Icon="@Icons.Material.Outlined.Edit" OnClick="context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="@Size.Medium" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" OnClick="(()=>UnFollow(context.Item))" />
                 </MudStack>
 
             </CellTemplate>
@@ -111,16 +114,23 @@
         <MudDataGridPager PageSizeOptions=@(new int[] {500, 1000, 3000}) T="SubItem" />
     </PagerContent>
 </MudDataGrid>
-</CascadingValue>
-
 @code {
     private List<FollowedProductResponse.SubItem> FollowedProductsList = new List<FollowedProductResponse.SubItem>();
+
     protected override async Task OnInitializedAsync()
     {
         await Load();
-        _stateContainer.OnChange_Products += OnMyChangeHandler;
-        loading = false;
+        string baseAddress = _config.GetValue<string>("BaseUrl");
+
+        _hubConnection = new HubConnectionBuilder().WithUrl($"{baseAddress}/modify").Build();
+        _hubConnection.On<string>("ReceiveNotification", async message =>
+        {
+            await Load();
+            await InvokeAsync(StateHasChanged);
+        });
+        await _hubConnection.StartAsync();
     }
+    private HubConnection? _hubConnection;
     private bool _readOnly;
     private bool _isCellEditMode;
     private bool _editTriggerRowClick;
@@ -157,14 +167,29 @@
     {
         try
         {
+            loading = true;
             FollowedProductResponse resp = await _service.GetAll();
-            _stateContainer.FollowedProducts = resp.Items;
+            FollowedProductsList = resp.Items;
+            loading = false;
+
         }
         catch (Exception ex)
         {
 
             throw;
         }
+    }
+    private async Task UnFollow(SubItem item)
+    {
+        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Takip edilen ürünlerden kaldırılacak emin misin?");
+        if (confirmed)
+        {
+            await _service.Remove(item.FollowedProduct.Id);
+
+            FollowedProductsList.Remove(item);
+            StateHasChanged();
+        }
+
     }
     private Func<SubItem, string> _cellStyleFunc => x =>
     {
@@ -178,27 +203,4 @@
         return style;
     };
 
-
-    private async void UnFollow(string id)
-    {
-        // await _service.Remove(id);
-        _stateContainer.FollowedProducts.Remove(_stateContainer.FollowedProducts.First(f => f.Id == id));
-        _stateContainer.OnChange_Products += OnMyChangeHandler;
-    }
-    private async void OnMyChangeHandler()
-    {
-        // InvokeAsync is inherited, it syncs the call back to the render thread
-        await InvokeAsync(() =>
-        {
-            StateHasChanged();
-        });
-    }
-    private async void OnMyChangeHandlerx()
-    {
-        // InvokeAsync is inherited, it syncs the call back to the render thread
-        await InvokeAsync(() =>
-        {
-            StateHasChanged();
-        });
-    }
 }

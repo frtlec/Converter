@@ -37,6 +37,12 @@ namespace API.Controllers
             await _service.Remove(id);
             return Ok(true);
         }
+        [HttpGet]
+        public async Task<IActionResult> RemoveByProductIdAndSourceSite(int productId,SourceSite sourceSite)
+        {
+            await _service.RemoveByProductIdAndSource(productId,sourceSite);
+            return Ok(true);
+        }
         [HttpPost]
         public async Task<IActionResult> Update([FromBody] FollowedProductUpdate item)
         {

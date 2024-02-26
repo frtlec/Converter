@@ -18,7 +18,7 @@ namespace Blazor.UI.Services
         {
             try
             {
-                var result = await _httpClient.GetStringAsync("followedproducts/getall");
+                var result = await _httpClient.GetStringAsync("/api/followedproducts/getall");
                 var resp = JsonConvert.DeserializeObject<FollowedProductResponse>(result);
 
 
@@ -36,7 +36,7 @@ namespace Blazor.UI.Services
         {
             try
             {
-                var resp = await _httpClient.PostAsJsonAsync("followedproducts/add", item);
+                var resp = await _httpClient.PostAsJsonAsync("/api/followedproducts/add", item);
             }
             catch (Exception ex)
             {
@@ -48,7 +48,19 @@ namespace Blazor.UI.Services
         {
             try
             {
-                var resp = await _httpClient.GetAsync($"followedproducts/remove/{id}");
+                var resp = await _httpClient.GetAsync($"/api/followedproducts/remove/{id}");
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+        public async Task RemoveByProductIdAndSourceSite(int productId, SourceSite sourceSite)
+        {
+            try
+            {
+                var resp = await _httpClient.GetAsync($"/api/followedproducts/RemoveByProductIdAndSourceSite?productId={productId}&sourcesite={sourceSite}");
             }
             catch (Exception ex)
             {
@@ -60,7 +72,7 @@ namespace Blazor.UI.Services
         {
             try
             {
-                var resp = await _httpClient.PostAsJsonAsync("followedproducts/Update", update);
+                var resp = await _httpClient.PostAsJsonAsync("/api/followedproducts/Update", update);
             }
             catch (Exception ex)
             {
@@ -72,7 +84,7 @@ namespace Blazor.UI.Services
         {
             try
             {
-                var resp = await _httpClient.PostAsJsonAsync("followedproducts/RemoveAndAdd", items);
+                var resp = await _httpClient.PostAsJsonAsync("/api/followedproducts/RemoveAndAdd", items);
             }
             catch (Exception ex)
             {
